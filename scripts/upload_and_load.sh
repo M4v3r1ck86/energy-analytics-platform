@@ -76,7 +76,7 @@ for entity in "${entities[@]}"; do
     --skip_leading_rows=1 \
     --null_marker=NULL \
     "$table" \
-    "gs://$BUCKET_NAME/landing/$entity/batch_date=*/${entity}_*.csv"
+    "gs://$BUCKET_NAME/landing/$entity/*.csv"
 done
 
 echo "Carga concluída. Não rode o script novamente sobre as mesmas tabelas."

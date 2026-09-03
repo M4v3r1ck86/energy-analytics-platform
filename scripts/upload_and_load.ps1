@@ -62,7 +62,7 @@ foreach ($entity in $entities) {
     --skip_leading_rows=1 `
     --null_marker=NULL `
     $table `
-    "gs://$BucketName/landing/$name/batch_date=*/${name}_*.csv"
+    "gs://$BucketName/landing/$name/*.csv"
   if ($LASTEXITCODE -ne 0) { throw "Falha ao carregar $name." }
 }
 
