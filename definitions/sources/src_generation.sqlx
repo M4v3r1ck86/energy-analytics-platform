@@ -1,0 +1,8 @@
+config {
+  type: "declaration",
+  database: dataform.projectConfig.defaultDatabase,
+  schema: "energy_raw",
+  name: "generation",
+  description: "Raw append-only de geração diária sintética, incluindo telemetria atrasada e corrigida."
+}
+

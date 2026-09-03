@@ -1,0 +1,4 @@
+customer_id,full_name,document_id,email,phone,city,state_code,customer_segment,signup_date,status,source_updated_at,extracted_at,batch_id
+CUST-000015,Isabela Esteves Mock 015,SYN-DOC-000015,cliente015@example.com,+5526910000015,Goiania,GO,SMB,2025-07-01,CHURNED,2026-08-18T14:30:00Z,2026-09-01T10:00:00Z,batch-20260901-001
+CUST-000010,Diego Costa Mock 010,SYN-DOC-000010,cliente010@example.com,+5521910000010,Ribeirao Preto,SP,SMB,2025-06-21,ACTIVE,2026-07-11T12:00:00Z,2026-09-01T10:00:00Z,batch-20260901-001
+CUST-000121,Nina Oliveira Mock 121,SYN-DOC-000121,cliente121@example.com,+5511990012121,Sao Paulo,SP,RESIDENTIAL,2026-07-11,ACTIVE,2026-07-11T09:15:00Z,2026-09-01T10:00:00Z,batch-20260901-001

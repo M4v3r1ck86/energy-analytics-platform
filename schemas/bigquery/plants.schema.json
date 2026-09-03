@@ -1,0 +1,16 @@
+[
+  {"name":"plant_id","type":"STRING","mode":"REQUIRED"},
+  {"name":"partner_id","type":"STRING","mode":"REQUIRED"},
+  {"name":"plant_name","type":"STRING","mode":"REQUIRED"},
+  {"name":"energy_source","type":"STRING","mode":"REQUIRED"},
+  {"name":"distributor_code","type":"STRING","mode":"REQUIRED"},
+  {"name":"city","type":"STRING","mode":"REQUIRED"},
+  {"name":"state_code","type":"STRING","mode":"REQUIRED"},
+  {"name":"installed_capacity_kw","type":"NUMERIC","mode":"REQUIRED"},
+  {"name":"commercial_operation_date","type":"DATE","mode":"REQUIRED"},
+  {"name":"status","type":"STRING","mode":"REQUIRED"},
+  {"name":"source_updated_at","type":"TIMESTAMP","mode":"REQUIRED"},
+  {"name":"extracted_at","type":"TIMESTAMP","mode":"REQUIRED"},
+  {"name":"batch_id","type":"STRING","mode":"REQUIRED"}
+]
+

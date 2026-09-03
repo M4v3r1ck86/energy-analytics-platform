@@ -1,0 +1,42 @@
+contract_version: 1.0.0
+entity: invoices
+description: Faturas mensais sintéticas vinculadas aos contratos.
+owner: billing
+source_system: billing
+classification: confidential
+grain: uma versão de fatura por invoice_id e source_updated_at
+primary_key: [invoice_id, source_updated_at]
+natural_key: [contract_id, reference_month]
+delivery:
+  format: csv
+  cadence: daily
+  path: invoices/batch_date=YYYY-MM-DD/invoices_<batch_id>.csv
+  encoding: UTF-8
+  delimiter: comma
+  header: true
+  null_marker: "NULL"
+freshness: {warn_after_hours: 26, error_after_hours: 48}
+columns:
+  - {name: invoice_id, type: STRING, required: true}
+  - {name: contract_id, type: STRING, required: true, references: contracts.contract_id}
+  - {name: reference_month, type: DATE, required: true, convention: primeiro dia do mês}
+  - {name: issue_date, type: DATE, required: true}
+  - {name: due_date, type: DATE, required: true}
+  - {name: energy_consumed_kwh, type: NUMERIC, required: true, minimum: 0}
+  - {name: energy_compensated_kwh, type: NUMERIC, required: true, minimum: 0}
+  - {name: gross_amount_brl, type: NUMERIC, required: true, minimum: 0}
+  - {name: discount_amount_brl, type: NUMERIC, required: true, minimum: 0}
+  - {name: net_amount_brl, type: NUMERIC, required: true, minimum: 0}
+  - {name: status, type: STRING, required: true, allowed_values: [OPEN, PAID, OVERDUE, CANCELLED]}
+  - {name: paid_at, type: TIMESTAMP, required: false}
+  - {name: source_updated_at, type: TIMESTAMP, required: true}
+  - {name: extracted_at, type: TIMESTAMP, required: true}
+  - {name: batch_id, type: STRING, required: true}
+quality_rules:
+  - {id: invoices_contract_fk, severity: ERROR, expression: contract_id deve existir em contracts Silver}
+  - {id: invoices_amount_reconciliation, severity: ERROR, expression: ABS(net_amount_brl - (gross_amount_brl - discount_amount_brl)) <= 0.01}
+  - {id: invoices_paid_timestamp, severity: ERROR, expression: status != 'PAID' OR paid_at IS NOT NULL}
+  - {id: invoices_reference_month, severity: ERROR, expression: EXTRACT(DAY FROM reference_month) = 1}
+evolution:
+  compatibility: backward
+  breaking_change_requires: major_version_and_consumer_approval

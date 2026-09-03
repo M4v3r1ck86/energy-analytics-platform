@@ -1,0 +1,2 @@
+plant_id,partner_id,plant_name,energy_source,distributor_code,city,state_code,installed_capacity_kw,commercial_operation_date,status,source_updated_at,extracted_at,batch_id
+PLANT-005,PARTNER-004,Usina Cerrado,BIOMASS,EQUATORIAL_GO,Goiania,GO,3200,2022-05-05,MAINTENANCE,2026-08-22T16:00:00Z,2026-09-01T10:00:00Z,batch-20260901-001

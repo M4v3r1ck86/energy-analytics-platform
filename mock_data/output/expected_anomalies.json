@@ -1,0 +1,192 @@
+[
+  {
+    "anomaly_id": "A01",
+    "entity": "customers",
+    "record_key": "CUST-000007",
+    "anomaly_type": "NULL_BUSINESS_FIELD",
+    "severity": "WARN",
+    "expected_detection": "email IS NULL",
+    "expected_action": "Preservar na Raw e sinalizar na Silver",
+    "batch_id": "batch-20260801-001"
+  },
+  {
+    "anomaly_id": "A02",
+    "entity": "customers",
+    "record_key": "CUST-000043",
+    "anomaly_type": "DUPLICATE_NATURAL_KEY",
+    "severity": "ERROR",
+    "expected_detection": "document_id duplicado com CUST-000042",
+    "expected_action": "Quarentena da versão conflitante",
+    "batch_id": "batch-20260801-001"
+  },
+  {
+    "anomaly_id": "A03",
+    "entity": "customers",
+    "record_key": "CUST-000010",
+    "anomaly_type": "EXACT_DUPLICATE_ACROSS_BATCH",
+    "severity": "INFO",
+    "expected_detection": "mesma PK e source_updated_at",
+    "expected_action": "Deduplicar por PK e metadados",
+    "batch_id": "batch-20260901-001"
+  },
+  {
+    "anomaly_id": "A04",
+    "entity": "customers",
+    "record_key": "CUST-000015",
+    "anomaly_type": "STATUS_CHANGE",
+    "severity": "INFO",
+    "expected_detection": "ACTIVE para CHURNED",
+    "expected_action": "Manter versão mais recente",
+    "batch_id": "batch-20260901-001"
+  },
+  {
+    "anomaly_id": "A05",
+    "entity": "plants",
+    "record_key": "PLANT-008",
+    "anomaly_type": "INVALID_NEGATIVE_CAPACITY",
+    "severity": "ERROR",
+    "expected_detection": "installed_capacity_kw <= 0",
+    "expected_action": "Quarentena",
+    "batch_id": "batch-20260801-001"
+  },
+  {
+    "anomaly_id": "A06",
+    "entity": "plants",
+    "record_key": "PLANT-005",
+    "anomaly_type": "STATUS_CHANGE",
+    "severity": "INFO",
+    "expected_detection": "OPERATING para MAINTENANCE",
+    "expected_action": "Manter versão mais recente",
+    "batch_id": "batch-20260901-001"
+  },
+  {
+    "anomaly_id": "A07",
+    "entity": "contracts",
+    "record_key": "CONTRACT-ERR-ORPHAN",
+    "anomaly_type": "ORPHAN_FOREIGN_KEY",
+    "severity": "ERROR",
+    "expected_detection": "customer_id inexistente",
+    "expected_action": "Quarentena",
+    "batch_id": "batch-20260901-001"
+  },
+  {
+    "anomaly_id": "A08",
+    "entity": "contracts",
+    "record_key": "CONTRACT-ERR-DISCOUNT",
+    "anomaly_type": "OUT_OF_RANGE",
+    "severity": "ERROR",
+    "expected_detection": "discount_rate fora de 0 a 1",
+    "expected_action": "Quarentena",
+    "batch_id": "batch-20260901-001"
+  },
+  {
+    "anomaly_id": "A09",
+    "entity": "contracts",
+    "record_key": "CONTRACT-ERR-DATES",
+    "anomaly_type": "INVALID_DATE_ORDER",
+    "severity": "ERROR",
+    "expected_detection": "end_date anterior a start_date",
+    "expected_action": "Quarentena",
+    "batch_id": "batch-20260901-001"
+  },
+  {
+    "anomaly_id": "A10",
+    "entity": "contracts",
+    "record_key": "CONTRACT-000010",
+    "anomaly_type": "STATUS_CHANGE",
+    "severity": "INFO",
+    "expected_detection": "ACTIVE para CANCELLED",
+    "expected_action": "Manter versão mais recente",
+    "batch_id": "batch-20260901-001"
+  },
+  {
+    "anomaly_id": "A11",
+    "entity": "invoices",
+    "record_key": "INV-000005",
+    "anomaly_type": "LATE_CORRECTION",
+    "severity": "INFO",
+    "expected_detection": "PK repetida com source_updated_at mais novo",
+    "expected_action": "Deduplicar por source_updated_at DESC",
+    "batch_id": "batch-20260901-001"
+  },
+  {
+    "anomaly_id": "A12",
+    "entity": "invoices",
+    "record_key": "INV-LATE-001",
+    "anomaly_type": "LATE_ARRIVING",
+    "severity": "INFO",
+    "expected_detection": "reference_month anterior ao batch",
+    "expected_action": "Reprocessar partição afetada",
+    "batch_id": "batch-20260901-001"
+  },
+  {
+    "anomaly_id": "A13",
+    "entity": "invoices",
+    "record_key": "INV-ERR-AMOUNT",
+    "anomaly_type": "ARITHMETIC_MISMATCH",
+    "severity": "ERROR",
+    "expected_detection": "net != gross - discount",
+    "expected_action": "Quarentena",
+    "batch_id": "batch-20260901-001"
+  },
+  {
+    "anomaly_id": "A14",
+    "entity": "invoices",
+    "record_key": "INV-ERR-PAID",
+    "anomaly_type": "CONDITIONAL_NULL",
+    "severity": "ERROR",
+    "expected_detection": "status PAID sem paid_at",
+    "expected_action": "Quarentena",
+    "batch_id": "batch-20260901-001"
+  },
+  {
+    "anomaly_id": "A15",
+    "entity": "invoices",
+    "record_key": "INV-000751",
+    "anomaly_type": "EXACT_DUPLICATE_SAME_BATCH",
+    "severity": "INFO",
+    "expected_detection": "linha identica repetida",
+    "expected_action": "Deduplicar",
+    "batch_id": "batch-20260901-001"
+  },
+  {
+    "anomaly_id": "A16",
+    "entity": "generation",
+    "record_key": "GEN-PLANT-003-2026-08-12",
+    "anomaly_type": "NEGATIVE_MEASUREMENT",
+    "severity": "ERROR",
+    "expected_detection": "generated_energy_kwh < 0",
+    "expected_action": "Quarentena",
+    "batch_id": "batch-20260901-001"
+  },
+  {
+    "anomaly_id": "A17",
+    "entity": "generation",
+    "record_key": "GEN-PLANT-004-2026-08-17",
+    "anomaly_type": "OUT_OF_RANGE",
+    "severity": "ERROR",
+    "expected_detection": "availability_rate > 1",
+    "expected_action": "Quarentena",
+    "batch_id": "batch-20260901-001"
+  },
+  {
+    "anomaly_id": "A18",
+    "entity": "generation",
+    "record_key": "GEN-PLANT-002-2026-07-20",
+    "anomaly_type": "LATE_ARRIVING",
+    "severity": "INFO",
+    "expected_detection": "generation_date 42 dias antes da extracao",
+    "expected_action": "Reprocessar partição afetada",
+    "batch_id": "batch-20260901-001"
+  },
+  {
+    "anomaly_id": "A19",
+    "entity": "generation",
+    "record_key": "GEN-PLANT-001-2026-07-15",
+    "anomaly_type": "LATE_CORRECTION",
+    "severity": "INFO",
+    "expected_detection": "PK repetida com source_updated_at mais novo",
+    "expected_action": "Deduplicar por source_updated_at DESC",
+    "batch_id": "batch-20260901-001"
+  }
+]

@@ -1,0 +1,40 @@
+contract_version: 1.0.0
+entity: contracts
+description: Vínculo entre cliente, unidade consumidora e usina parceira.
+owner: customer_operations
+source_system: contract_management
+classification: internal
+grain: uma versão de contrato por contract_id e source_updated_at
+primary_key: [contract_id, source_updated_at]
+natural_key: [consumer_unit_id, start_date]
+delivery:
+  format: csv
+  cadence: daily
+  path: contracts/batch_date=YYYY-MM-DD/contracts_<batch_id>.csv
+  encoding: UTF-8
+  delimiter: comma
+  header: true
+  null_marker: "NULL"
+freshness: {warn_after_hours: 26, error_after_hours: 48}
+columns:
+  - {name: contract_id, type: STRING, required: true}
+  - {name: customer_id, type: STRING, required: true, references: customers.customer_id}
+  - {name: plant_id, type: STRING, required: true, references: plants.plant_id}
+  - {name: consumer_unit_id, type: STRING, required: true}
+  - {name: distributor_code, type: STRING, required: true}
+  - {name: start_date, type: DATE, required: true}
+  - {name: end_date, type: DATE, required: false}
+  - {name: contracted_energy_kwh_month, type: NUMERIC, required: true, minimum_exclusive: 0}
+  - {name: discount_rate, type: NUMERIC, required: true, minimum: 0, maximum: 1}
+  - {name: status, type: STRING, required: true, allowed_values: [ACTIVE, SUSPENDED, CANCELLED]}
+  - {name: source_updated_at, type: TIMESTAMP, required: true}
+  - {name: extracted_at, type: TIMESTAMP, required: true}
+  - {name: batch_id, type: STRING, required: true}
+quality_rules:
+  - {id: contracts_customer_fk, severity: ERROR, expression: customer_id deve existir em customers Silver}
+  - {id: contracts_plant_fk, severity: ERROR, expression: plant_id deve existir em plants Silver}
+  - {id: contracts_discount_range, severity: ERROR, expression: discount_rate BETWEEN 0 AND 1}
+  - {id: contracts_date_order, severity: ERROR, expression: end_date IS NULL OR end_date >= start_date}
+evolution:
+  compatibility: backward
+  breaking_change_requires: major_version_and_consumer_approval

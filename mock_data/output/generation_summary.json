@@ -1,0 +1,19 @@
+{
+  "seed": 20260903,
+  "batches": {
+    "initial": {
+      "id": "batch-20260801-001",
+      "date": "2026-08-01",
+      "extractedAt": "2026-08-01T10:00:00Z"
+    },
+    "delta": {
+      "id": "batch-20260901-001",
+      "date": "2026-09-01",
+      "extractedAt": "2026-09-01T10:00:00Z"
+    }
+  },
+  "total_files": 10,
+  "total_rows": 2660,
+  "anomaly_count": 19,
+  "note": "Synthetic data only. Names, identifiers and contacts are fictitious."
+}

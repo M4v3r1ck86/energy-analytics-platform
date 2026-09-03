@@ -1,0 +1,8 @@
+config {
+  type: "declaration",
+  database: dataform.projectConfig.defaultDatabase,
+  schema: "energy_raw",
+  name: "invoices",
+  description: "Raw append-only de faturas sintéticas, incluindo atrasos e correções."
+}
+

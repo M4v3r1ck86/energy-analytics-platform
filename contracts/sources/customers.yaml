@@ -1,0 +1,42 @@
+contract_version: 1.0.0
+entity: customers
+description: Cadastro sintético de clientes de energia renovável por assinatura.
+owner: data_platform
+source_system: crm
+classification: synthetic_pii
+grain: uma versão de cliente por customer_id e source_updated_at
+primary_key: [customer_id, source_updated_at]
+natural_key: [document_id]
+delivery:
+  format: csv
+  cadence: daily
+  path: customers/batch_date=YYYY-MM-DD/customers_<batch_id>.csv
+  encoding: UTF-8
+  delimiter: comma
+  header: true
+  null_marker: "NULL"
+freshness:
+  warn_after_hours: 26
+  error_after_hours: 48
+columns:
+  - {name: customer_id, type: STRING, required: true, description: Identificador estável do cliente.}
+  - {name: full_name, type: STRING, required: true, description: Nome fictício do cliente.}
+  - {name: document_id, type: STRING, required: true, description: Documento sintético; nunca representa CPF real.}
+  - {name: email, type: STRING, required: false, description: E-mail sintético no domínio example.com.}
+  - {name: phone, type: STRING, required: false, description: Telefone sintético.}
+  - {name: city, type: STRING, required: true, description: Município da unidade consumidora.}
+  - {name: state_code, type: STRING, required: true, description: UF com duas letras.}
+  - {name: customer_segment, type: STRING, required: true, allowed_values: [RESIDENTIAL, SMB]}
+  - {name: signup_date, type: DATE, required: true, description: Data de aquisição.}
+  - {name: status, type: STRING, required: true, allowed_values: [ACTIVE, SUSPENDED, CHURNED]}
+  - {name: source_updated_at, type: TIMESTAMP, required: true, description: Watermark da origem.}
+  - {name: extracted_at, type: TIMESTAMP, required: true, description: Momento da extração.}
+  - {name: batch_id, type: STRING, required: true, description: Identificador idempotente do lote.}
+quality_rules:
+  - {id: customers_pk_not_null, severity: ERROR, expression: customer_id IS NOT NULL}
+  - {id: customers_document_unique_latest, severity: ERROR, expression: document_id deve ser único após deduplicação}
+  - {id: customers_email_present, severity: WARN, expression: email IS NOT NULL}
+  - {id: customers_state_format, severity: ERROR, expression: "REGEXP_CONTAINS(state_code, r'^[A-Z]{2}$')"}
+evolution:
+  compatibility: backward
+  breaking_change_requires: major_version_and_consumer_approval
