@@ -1,0 +1,8 @@
+config {
+  type: "declaration",
+  database: dataform.projectConfig.defaultDatabase,
+  schema: "energy_raw",
+  name: "plants",
+  description: "Raw append-only de usinas parceiras sintéticas."
+}
+

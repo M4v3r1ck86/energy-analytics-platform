@@ -1,0 +1,8 @@
+config {
+  type: "declaration",
+  database: dataform.projectConfig.defaultDatabase,
+  schema: "energy_raw",
+  name: "contracts",
+  description: "Raw append-only de contratos sintéticos."
+}
+

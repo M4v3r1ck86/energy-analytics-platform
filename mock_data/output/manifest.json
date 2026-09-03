@@ -1,0 +1,88 @@
+{
+  "dataset": "energy_analytics_synthetic",
+  "generated_at": "2026-09-03T12:00:00Z",
+  "seed": 20260903,
+  "null_marker": "NULL",
+  "files": [
+    {
+      "entity": "customers",
+      "batch_id": "batch-20260801-001",
+      "batch_date": "2026-08-01",
+      "relative_path": "customers/batch_date=2026-08-01/customers_batch-20260801-001.csv",
+      "row_count": 120,
+      "sha256": "67441545a7e51d2e0ae9ff1ea77dd030718446cee32c962e53ad0f6ce40cd359"
+    },
+    {
+      "entity": "customers",
+      "batch_id": "batch-20260901-001",
+      "batch_date": "2026-09-01",
+      "relative_path": "customers/batch_date=2026-09-01/customers_batch-20260901-001.csv",
+      "row_count": 3,
+      "sha256": "04ec647c771f9968a7300105dc52fc11ce18656e4b6453565cb9d9cdff6ff56b"
+    },
+    {
+      "entity": "plants",
+      "batch_id": "batch-20260801-001",
+      "batch_date": "2026-08-01",
+      "relative_path": "plants/batch_date=2026-08-01/plants_batch-20260801-001.csv",
+      "row_count": 8,
+      "sha256": "3e1bf7ec8afc32b40c99e124f108392322b4ba2b8ba454069322f8ff6b3c6045"
+    },
+    {
+      "entity": "plants",
+      "batch_id": "batch-20260901-001",
+      "batch_date": "2026-09-01",
+      "relative_path": "plants/batch_date=2026-09-01/plants_batch-20260901-001.csv",
+      "row_count": 1,
+      "sha256": "34437e540b53a94831be9134b9f5e2b9377119c783f96df9d666775d2c5ff057"
+    },
+    {
+      "entity": "contracts",
+      "batch_id": "batch-20260801-001",
+      "batch_date": "2026-08-01",
+      "relative_path": "contracts/batch_date=2026-08-01/contracts_batch-20260801-001.csv",
+      "row_count": 150,
+      "sha256": "83f1054da93b97df138dda82b64b1ac6efd517b4b1a557b257ea2c59c0d1beaf"
+    },
+    {
+      "entity": "contracts",
+      "batch_id": "batch-20260901-001",
+      "batch_date": "2026-09-01",
+      "relative_path": "contracts/batch_date=2026-09-01/contracts_batch-20260901-001.csv",
+      "row_count": 5,
+      "sha256": "9ab51c656c12201ac0c80f36713c78bd42548876d3d4528acd7082fac4641d01"
+    },
+    {
+      "entity": "invoices",
+      "batch_id": "batch-20260801-001",
+      "batch_date": "2026-08-01",
+      "relative_path": "invoices/batch_date=2026-08-01/invoices_batch-20260801-001.csv",
+      "row_count": 750,
+      "sha256": "7e656808fc080b4bc1341492faf4619bf77020cefa3b3ecca436f84aff45e7b0"
+    },
+    {
+      "entity": "invoices",
+      "batch_id": "batch-20260901-001",
+      "batch_date": "2026-09-01",
+      "relative_path": "invoices/batch_date=2026-09-01/invoices_batch-20260901-001.csv",
+      "row_count": 150,
+      "sha256": "37474352980607dc5a12ef10a1d472f8018743ada9d46b351a51495119df32b0"
+    },
+    {
+      "entity": "generation",
+      "batch_id": "batch-20260801-001",
+      "batch_date": "2026-08-01",
+      "relative_path": "generation/batch_date=2026-08-01/generation_batch-20260801-001.csv",
+      "row_count": 1223,
+      "sha256": "2e29abc6133c5e521b8d0e813a626c66ff016d11476e26211b558eccbaf533da"
+    },
+    {
+      "entity": "generation",
+      "batch_id": "batch-20260901-001",
+      "batch_date": "2026-09-01",
+      "relative_path": "generation/batch_date=2026-09-01/generation_batch-20260901-001.csv",
+      "row_count": 250,
+      "sha256": "87dc9fba522e75eab72532d69a85b1fefd9de8cb38d51a7bb8c1b1f223923519"
+    }
+  ]
+}

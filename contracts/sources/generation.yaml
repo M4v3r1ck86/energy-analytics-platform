@@ -1,0 +1,37 @@
+contract_version: 1.0.0
+entity: generation
+description: Medição diária sintética de energia gerada por usina.
+owner: distributed_generation
+source_system: plant_telemetry
+classification: internal
+grain: uma versão de medição por plant_id, generation_date e source_updated_at
+primary_key: [generation_id, source_updated_at]
+natural_key: [plant_id, generation_date]
+delivery:
+  format: csv
+  cadence: daily
+  path: generation/batch_date=YYYY-MM-DD/generation_<batch_id>.csv
+  encoding: UTF-8
+  delimiter: comma
+  header: true
+  null_marker: "NULL"
+freshness: {warn_after_hours: 30, error_after_hours: 54}
+columns:
+  - {name: generation_id, type: STRING, required: true}
+  - {name: plant_id, type: STRING, required: true, references: plants.plant_id}
+  - {name: generation_date, type: DATE, required: true}
+  - {name: generated_energy_kwh, type: NUMERIC, required: true, minimum: 0}
+  - {name: expected_energy_kwh, type: NUMERIC, required: true, minimum_exclusive: 0}
+  - {name: availability_rate, type: NUMERIC, required: true, minimum: 0, maximum: 1}
+  - {name: measurement_status, type: STRING, required: true, allowed_values: [PRELIMINARY, FINAL, CORRECTED]}
+  - {name: source_updated_at, type: TIMESTAMP, required: true}
+  - {name: extracted_at, type: TIMESTAMP, required: true}
+  - {name: batch_id, type: STRING, required: true}
+quality_rules:
+  - {id: generation_plant_fk, severity: ERROR, expression: plant_id deve existir em plants Silver}
+  - {id: generation_non_negative, severity: ERROR, expression: generated_energy_kwh >= 0}
+  - {id: generation_availability_range, severity: ERROR, expression: availability_rate BETWEEN 0 AND 1}
+  - {id: generation_unique_daily_latest, severity: ERROR, expression: uma linha por plant_id e generation_date após deduplicação}
+evolution:
+  compatibility: backward
+  breaking_change_requires: major_version_and_consumer_approval

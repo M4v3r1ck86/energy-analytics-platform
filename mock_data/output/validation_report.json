@@ -1,0 +1,8 @@
+{
+  "validated_at": "2026-09-03T05:53:39.064Z",
+  "files_checked": 10,
+  "rows_checked": 2660,
+  "anomaly_scenarios_checked": 19,
+  "passed": true,
+  "failures": []
+}

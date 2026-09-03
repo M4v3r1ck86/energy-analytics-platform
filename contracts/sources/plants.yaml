@@ -1,0 +1,39 @@
+contract_version: 1.0.0
+entity: plants
+description: Cadastro sintético de usinas de parceiros e suas características operacionais.
+owner: distributed_generation
+source_system: asset_management
+classification: internal
+grain: uma versão de usina por plant_id e source_updated_at
+primary_key: [plant_id, source_updated_at]
+natural_key: [plant_id]
+delivery:
+  format: csv
+  cadence: daily
+  path: plants/batch_date=YYYY-MM-DD/plants_<batch_id>.csv
+  encoding: UTF-8
+  delimiter: comma
+  header: true
+  null_marker: "NULL"
+freshness: {warn_after_hours: 26, error_after_hours: 48}
+columns:
+  - {name: plant_id, type: STRING, required: true}
+  - {name: partner_id, type: STRING, required: true}
+  - {name: plant_name, type: STRING, required: true}
+  - {name: energy_source, type: STRING, required: true, allowed_values: [SOLAR, BIOGAS, BIOMASS]}
+  - {name: distributor_code, type: STRING, required: true}
+  - {name: city, type: STRING, required: true}
+  - {name: state_code, type: STRING, required: true}
+  - {name: installed_capacity_kw, type: NUMERIC, required: true, minimum_exclusive: 0}
+  - {name: commercial_operation_date, type: DATE, required: true}
+  - {name: status, type: STRING, required: true, allowed_values: [OPERATING, MAINTENANCE, INACTIVE]}
+  - {name: source_updated_at, type: TIMESTAMP, required: true}
+  - {name: extracted_at, type: TIMESTAMP, required: true}
+  - {name: batch_id, type: STRING, required: true}
+quality_rules:
+  - {id: plants_pk_not_null, severity: ERROR, expression: plant_id IS NOT NULL}
+  - {id: plants_capacity_positive, severity: ERROR, expression: installed_capacity_kw > 0}
+  - {id: plants_operation_date_not_future, severity: ERROR, expression: commercial_operation_date <= CURRENT_DATE()}
+evolution:
+  compatibility: backward
+  breaking_change_requires: major_version_and_consumer_approval
