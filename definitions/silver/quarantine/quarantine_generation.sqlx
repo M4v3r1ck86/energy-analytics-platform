@@ -1,0 +1,23 @@
+config {
+  type: "table",
+  database: dataform.projectConfig.defaultDatabase,
+  schema: "energy_silver",
+  name: "quarantine_generation",
+  description: "Medições rejeitadas na classificação Silver, incluindo valores operacionais inválidos.",
+  tags: ["stage3", "silver", "quarantine", "generation"],
+  hermetic: true,
+  assertions: {
+    rowConditions: ["ARRAY_LENGTH(quality_error_codes) > 0"]
+  },
+  bigquery: {
+    partitionBy: "generation_date",
+    clusterBy: ["plant_id", "generation_id"],
+    labels: { layer: "quarantine", entity: "generation" }
+  }
+}
+
+SELECT
+  * EXCEPT (is_valid),
+  CURRENT_TIMESTAMP() AS quarantined_at
+FROM ${ref("int_generation_classified")}
+WHERE NOT is_valid

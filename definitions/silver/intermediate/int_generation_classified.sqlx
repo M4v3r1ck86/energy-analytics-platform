@@ -1,0 +1,62 @@
+config {
+  type: "view",
+  database: dataform.projectConfig.defaultDatabase,
+  schema: "energy_silver",
+  name: "int_generation_classified",
+  description: "Versão mais recente de cada medição diária, incluindo regras operacionais e integridade referencial.",
+  tags: ["stage3", "silver", "intermediate", "generation"],
+  hermetic: true
+}
+
+WITH raw_ranked AS (
+  SELECT
+    *,
+    ROW_NUMBER() OVER (
+      PARTITION BY plant_id, generation_date
+      ORDER BY source_updated_at DESC, extracted_at DESC, batch_id DESC
+    ) AS version_rank
+  FROM ${ref("generation")}
+),
+
+latest AS (
+  SELECT * EXCEPT (version_rank)
+  FROM raw_ranked
+  WHERE version_rank = 1
+),
+
+with_references AS (
+  SELECT
+    generation.*,
+    plant.plant_id IS NOT NULL AS plant_exists
+  FROM latest AS generation
+  LEFT JOIN ${ref("silver_plants")} AS plant
+    USING (plant_id)
+),
+
+classified AS (
+  SELECT
+    * EXCEPT (plant_exists),
+    ARRAY(
+      SELECT code
+      FROM UNNEST([
+        IF(generation_id IS NULL OR TRIM(generation_id) = "", "GENERATION_ID_MISSING", NULL),
+        IF(plant_id IS NULL OR TRIM(plant_id) = "", "PLANT_ID_MISSING", NULL),
+        IF(generation_date IS NULL, "GENERATION_DATE_MISSING", NULL),
+        IF(generated_energy_kwh IS NULL OR generated_energy_kwh < 0, "NEGATIVE_OR_MISSING_GENERATED_ENERGY", NULL),
+        IF(expected_energy_kwh IS NULL OR expected_energy_kwh <= 0, "NON_POSITIVE_EXPECTED_ENERGY", NULL),
+        IF(availability_rate IS NULL OR availability_rate < 0 OR availability_rate > 1, "AVAILABILITY_OUT_OF_RANGE", NULL),
+        IF(measurement_status IS NULL OR measurement_status NOT IN ("PRELIMINARY", "FINAL", "CORRECTED"), "INVALID_MEASUREMENT_STATUS", NULL),
+        IF(source_updated_at IS NULL, "SOURCE_UPDATED_AT_MISSING", NULL),
+        IF(batch_id IS NULL OR TRIM(batch_id) = "", "BATCH_ID_MISSING", NULL),
+        IF(NOT plant_exists, "PLANT_NOT_FOUND_IN_SILVER", NULL)
+      ]) AS code
+      WHERE code IS NOT NULL
+    ) AS quality_error_codes,
+    ARRAY<STRING>[] AS quality_warning_codes
+  FROM with_references
+)
+
+SELECT
+  *,
+  ARRAY_LENGTH(quality_error_codes) = 0 AS is_valid
+FROM classified

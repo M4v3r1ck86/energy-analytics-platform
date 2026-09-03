@@ -1,0 +1,11 @@
+config {
+  type: "assertion",
+  tags: ["stage3", "silver", "referential_integrity"],
+  hermetic: true
+}
+
+SELECT invoice.*
+FROM ${ref("silver_invoices")} AS invoice
+LEFT JOIN ${ref("silver_contracts")} AS contract
+  USING (contract_id)
+WHERE contract.contract_id IS NULL

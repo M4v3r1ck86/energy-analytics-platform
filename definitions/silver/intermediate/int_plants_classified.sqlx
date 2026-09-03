@@ -1,0 +1,54 @@
+config {
+  type: "view",
+  database: dataform.projectConfig.defaultDatabase,
+  schema: "energy_silver",
+  name: "int_plants_classified",
+  description: "Versão mais recente de cada usina, classificada por regras de qualidade antes da publicação Silver.",
+  tags: ["stage3", "silver", "intermediate", "plants"],
+  hermetic: true
+}
+
+WITH raw_ranked AS (
+  SELECT
+    *,
+    ROW_NUMBER() OVER (
+      PARTITION BY plant_id
+      ORDER BY source_updated_at DESC, extracted_at DESC, batch_id DESC
+    ) AS version_rank
+  FROM ${ref("plants")}
+),
+
+latest AS (
+  SELECT * EXCEPT (version_rank)
+  FROM raw_ranked
+  WHERE version_rank = 1
+),
+
+classified AS (
+  SELECT
+    *,
+    ARRAY(
+      SELECT code
+      FROM UNNEST([
+        IF(plant_id IS NULL OR TRIM(plant_id) = "", "PLANT_ID_MISSING", NULL),
+        IF(partner_id IS NULL OR TRIM(partner_id) = "", "PARTNER_ID_MISSING", NULL),
+        IF(plant_name IS NULL OR TRIM(plant_name) = "", "PLANT_NAME_MISSING", NULL),
+        IF(energy_source IS NULL OR energy_source NOT IN ("SOLAR", "BIOGAS", "BIOMASS"), "INVALID_ENERGY_SOURCE", NULL),
+        IF(state_code IS NULL OR NOT REGEXP_CONTAINS(state_code, r"^[A-Z]{2}$"), "INVALID_STATE_CODE", NULL),
+        IF(installed_capacity_kw IS NULL OR installed_capacity_kw <= 0, "NON_POSITIVE_CAPACITY", NULL),
+        IF(commercial_operation_date IS NULL, "OPERATION_DATE_MISSING", NULL),
+        IF(commercial_operation_date > CURRENT_DATE(), "FUTURE_OPERATION_DATE", NULL),
+        IF(status IS NULL OR status NOT IN ("OPERATING", "MAINTENANCE", "INACTIVE"), "INVALID_PLANT_STATUS", NULL),
+        IF(source_updated_at IS NULL, "SOURCE_UPDATED_AT_MISSING", NULL),
+        IF(batch_id IS NULL OR TRIM(batch_id) = "", "BATCH_ID_MISSING", NULL)
+      ]) AS code
+      WHERE code IS NOT NULL
+    ) AS quality_error_codes,
+    ARRAY<STRING>[] AS quality_warning_codes
+  FROM latest
+)
+
+SELECT
+  *,
+  ARRAY_LENGTH(quality_error_codes) = 0 AS is_valid
+FROM classified

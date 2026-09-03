@@ -1,0 +1,41 @@
+{
+  "project": "energy-analytics-platform",
+  "stage": 3,
+  "name": "Silver quality and quarantine",
+  "generated_at": "2026-09-03",
+  "gcp_project": "energy-analytics-lemon-lab",
+  "source_dataset": "energy_raw",
+  "target_dataset": "energy_silver",
+  "execution_tag": "stage3",
+  "delivery_workflow": "github_desktop",
+  "cloud_shell_required": false,
+  "requires_stage2_reload": false,
+  "creates_new_workspace": false,
+  "creates_new_dataset": false,
+  "actions": {
+    "intermediate_views": 5,
+    "curated_tables": 5,
+    "quarantine_tables": 5,
+    "custom_assertions": 5,
+    "total_sqlx_actions": 20
+  },
+  "validation": {
+    "manual_queries": 3,
+    "expected_counts_file": "validation/expected_counts.json",
+    "structural_validator": "scripts/validate_stage3_package.mjs"
+  },
+  "expected_silver_rows": {
+    "customers": 120,
+    "plants": 7,
+    "contracts": 132,
+    "invoices": 782,
+    "generation": 1286
+  },
+  "expected_quarantine_rows": {
+    "customers": 1,
+    "plants": 1,
+    "contracts": 22,
+    "invoices": 116,
+    "generation": 186
+  }
+}

@@ -1,0 +1,68 @@
+config {
+  type: "view",
+  database: dataform.projectConfig.defaultDatabase,
+  schema: "energy_silver",
+  name: "int_contracts_classified",
+  description: "Versão mais recente de cada contrato, incluindo validações de negócio e integridade referencial.",
+  tags: ["stage3", "silver", "intermediate", "contracts"],
+  hermetic: true
+}
+
+WITH raw_ranked AS (
+  SELECT
+    *,
+    ROW_NUMBER() OVER (
+      PARTITION BY contract_id
+      ORDER BY source_updated_at DESC, extracted_at DESC, batch_id DESC
+    ) AS version_rank
+  FROM ${ref("contracts")}
+),
+
+latest AS (
+  SELECT * EXCEPT (version_rank)
+  FROM raw_ranked
+  WHERE version_rank = 1
+),
+
+with_references AS (
+  SELECT
+    contract.*,
+    customer.customer_id IS NOT NULL AS customer_exists,
+    plant.plant_id IS NOT NULL AS plant_exists
+  FROM latest AS contract
+  LEFT JOIN ${ref("silver_customers")} AS customer
+    USING (customer_id)
+  LEFT JOIN ${ref("silver_plants")} AS plant
+    USING (plant_id)
+),
+
+classified AS (
+  SELECT
+    * EXCEPT (customer_exists, plant_exists),
+    ARRAY(
+      SELECT code
+      FROM UNNEST([
+        IF(contract_id IS NULL OR TRIM(contract_id) = "", "CONTRACT_ID_MISSING", NULL),
+        IF(customer_id IS NULL OR TRIM(customer_id) = "", "CUSTOMER_ID_MISSING", NULL),
+        IF(plant_id IS NULL OR TRIM(plant_id) = "", "PLANT_ID_MISSING", NULL),
+        IF(consumer_unit_id IS NULL OR TRIM(consumer_unit_id) = "", "CONSUMER_UNIT_ID_MISSING", NULL),
+        IF(start_date IS NULL, "START_DATE_MISSING", NULL),
+        IF(contracted_energy_kwh_month IS NULL OR contracted_energy_kwh_month <= 0, "NON_POSITIVE_CONTRACTED_ENERGY", NULL),
+        IF(discount_rate IS NULL OR discount_rate < 0 OR discount_rate > 1, "DISCOUNT_OUT_OF_RANGE", NULL),
+        IF(end_date IS NOT NULL AND end_date < start_date, "INVALID_DATE_ORDER", NULL),
+        IF(status IS NULL OR status NOT IN ("ACTIVE", "SUSPENDED", "CANCELLED"), "INVALID_CONTRACT_STATUS", NULL),
+        IF(source_updated_at IS NULL, "SOURCE_UPDATED_AT_MISSING", NULL),
+        IF(batch_id IS NULL OR TRIM(batch_id) = "", "BATCH_ID_MISSING", NULL),
+        IF(NOT customer_exists, "CUSTOMER_NOT_FOUND_IN_SILVER", NULL),
+        IF(NOT plant_exists, "PLANT_NOT_FOUND_IN_SILVER", NULL)
+      ]) AS code
+      WHERE code IS NOT NULL
+    ) AS quality_error_codes,
+    ARRAY<STRING>[] AS quality_warning_codes
+  FROM with_references
+)
+
+SELECT
+  *,
+  ARRAY_LENGTH(quality_error_codes) = 0 AS is_valid
+FROM classified

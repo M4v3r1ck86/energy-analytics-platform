@@ -1,0 +1,46 @@
+config {
+  type: "table",
+  database: dataform.projectConfig.defaultDatabase,
+  schema: "energy_silver",
+  name: "silver_generation",
+  description: "Medições diárias Silver válidas, deduplicadas e ligadas a usinas válidas.",
+  tags: ["stage3", "silver", "curated", "generation"],
+  hermetic: true,
+  assertions: {
+    uniqueKeys: [["generation_id"], ["plant_id", "generation_date"]],
+    nonNull: ["generation_id", "plant_id", "generation_date", "generated_energy_kwh", "expected_energy_kwh", "availability_rate", "measurement_status", "source_updated_at", "batch_id"],
+    rowConditions: [
+      "generated_energy_kwh >= 0",
+      "expected_energy_kwh > 0",
+      "availability_rate BETWEEN 0 AND 1",
+      "measurement_status IN ('PRELIMINARY', 'FINAL', 'CORRECTED')"
+    ]
+  },
+  bigquery: {
+    partitionBy: "generation_date",
+    clusterBy: ["plant_id", "measurement_status"],
+    labels: { layer: "silver", entity: "generation" }
+  },
+  columns: {
+    generation_id: "Identificador da medição diária.",
+    generated_energy_kwh: "Energia gerada validada em kWh.",
+    availability_rate: "Taxa de disponibilidade entre zero e um.",
+    silver_processed_at: "Momento em que o registro foi materializado na Silver."
+  }
+}
+
+SELECT
+  generation_id,
+  plant_id,
+  generation_date,
+  generated_energy_kwh,
+  expected_energy_kwh,
+  availability_rate,
+  measurement_status,
+  source_updated_at,
+  extracted_at,
+  batch_id,
+  quality_warning_codes,
+  CURRENT_TIMESTAMP() AS silver_processed_at
+FROM ${ref("int_generation_classified")}
+WHERE is_valid

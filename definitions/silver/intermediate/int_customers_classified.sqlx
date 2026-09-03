@@ -1,0 +1,71 @@
+config {
+  type: "view",
+  database: dataform.projectConfig.defaultDatabase,
+  schema: "energy_silver",
+  name: "int_customers_classified",
+  description: "Versão mais recente de cada cliente, classificada por regras de qualidade antes da publicação Silver.",
+  tags: ["stage3", "silver", "intermediate", "customers"],
+  hermetic: true
+}
+
+WITH raw_ranked AS (
+  SELECT
+    *,
+    ROW_NUMBER() OVER (
+      PARTITION BY customer_id
+      ORDER BY source_updated_at DESC, extracted_at DESC, batch_id DESC
+    ) AS version_rank
+  FROM ${ref("customers")}
+),
+
+latest AS (
+  SELECT * EXCEPT (version_rank)
+  FROM raw_ranked
+  WHERE version_rank = 1
+),
+
+document_ranked AS (
+  SELECT
+    *,
+    COUNT(*) OVER (PARTITION BY document_id) AS document_occurrences,
+    ROW_NUMBER() OVER (
+      PARTITION BY document_id
+      ORDER BY signup_date ASC, customer_id ASC
+    ) AS document_rank
+  FROM latest
+),
+
+classified AS (
+  SELECT
+    * EXCEPT (document_occurrences, document_rank),
+    ARRAY(
+      SELECT code
+      FROM UNNEST([
+        IF(customer_id IS NULL OR TRIM(customer_id) = "", "CUSTOMER_ID_MISSING", NULL),
+        IF(full_name IS NULL OR TRIM(full_name) = "", "FULL_NAME_MISSING", NULL),
+        IF(document_id IS NULL OR TRIM(document_id) = "", "DOCUMENT_ID_MISSING", NULL),
+        IF(city IS NULL OR TRIM(city) = "", "CITY_MISSING", NULL),
+        IF(state_code IS NULL OR NOT REGEXP_CONTAINS(state_code, r"^[A-Z]{2}$"), "INVALID_STATE_CODE", NULL),
+        IF(customer_segment IS NULL OR customer_segment NOT IN ("RESIDENTIAL", "SMB"), "INVALID_CUSTOMER_SEGMENT", NULL),
+        IF(signup_date IS NULL, "SIGNUP_DATE_MISSING", NULL),
+        IF(status IS NULL OR status NOT IN ("ACTIVE", "SUSPENDED", "CHURNED"), "INVALID_CUSTOMER_STATUS", NULL),
+        IF(source_updated_at IS NULL, "SOURCE_UPDATED_AT_MISSING", NULL),
+        IF(batch_id IS NULL OR TRIM(batch_id) = "", "BATCH_ID_MISSING", NULL),
+        IF(document_occurrences > 1 AND document_rank > 1, "DUPLICATE_DOCUMENT_ID", NULL)
+      ]) AS code
+      WHERE code IS NOT NULL
+    ) AS quality_error_codes,
+    ARRAY(
+      SELECT code
+      FROM UNNEST([
+        IF(email IS NULL OR TRIM(email) = "", "EMAIL_MISSING", NULL)
+      ]) AS code
+      WHERE code IS NOT NULL
+    ) AS quality_warning_codes
+  FROM document_ranked
+)
+
+SELECT
+  *,
+  ARRAY_LENGTH(quality_error_codes) = 0 AS is_valid
+FROM classified

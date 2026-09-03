@@ -1,0 +1,39 @@
+{
+  "source_snapshot": {
+    "raw_rows": {
+      "customers": 123,
+      "plants": 9,
+      "contracts": 155,
+      "invoices": 900,
+      "generation": 1473
+    },
+    "latest_rows_after_deduplication": {
+      "customers": 121,
+      "plants": 8,
+      "contracts": 154,
+      "invoices": 898,
+      "generation": 1472
+    }
+  },
+  "stage3_expected": {
+    "silver_rows": {
+      "customers": 120,
+      "plants": 7,
+      "contracts": 132,
+      "invoices": 782,
+      "generation": 1286
+    },
+    "quarantine_rows": {
+      "customers": 1,
+      "plants": 1,
+      "contracts": 22,
+      "invoices": 116,
+      "generation": 186
+    }
+  },
+  "notes": [
+    "A usina PLANT-008 é inválida; contratos e medições que dependem dela também ficam em quarentena.",
+    "O cliente CUST-000043 conflita pelo document_id; contratos e faturas dependentes também ficam em quarentena.",
+    "As contagens pressupõem exatamente os dois lotes gerados na Etapa 2 e nenhuma recarga duplicada da Raw."
+  ]
+}
