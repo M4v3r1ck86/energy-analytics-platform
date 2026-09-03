@@ -1,0 +1,5 @@
+defaultProject: energy-analytics-lemon-lab
+defaultLocation: southamerica-east1
+defaultDataset: energy_silver
+defaultAssertionDataset: dataform_assertions
+dataformCoreVersion: 3.0.52

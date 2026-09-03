@@ -1,0 +1,12 @@
+config {
+  type: "table",
+  schema: "energy_silver",
+  name: "hello_dataform",
+  description: "Validation table for the Dataform to BigQuery execution path.",
+  tags: ["bootstrap", "silver"]
+}
+
+SELECT
+  1 AS id,
+  "Dataform funcionando" AS status,
+  CURRENT_TIMESTAMP() AS created_at
