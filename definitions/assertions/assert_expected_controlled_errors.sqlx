@@ -1,0 +1,40 @@
+config {
+  type: "assertion",
+  tags: ["stage3", "silver", "controlled_anomalies"],
+  hermetic: true
+}
+
+WITH expected AS (
+  SELECT "customers" AS entity, "CUST-000043" AS record_key
+  UNION ALL SELECT "plants", "PLANT-008"
+  UNION ALL SELECT "contracts", "CONTRACT-ERR-ORPHAN"
+  UNION ALL SELECT "contracts", "CONTRACT-ERR-DISCOUNT"
+  UNION ALL SELECT "contracts", "CONTRACT-ERR-DATES"
+  UNION ALL SELECT "invoices", "INV-ERR-AMOUNT"
+  UNION ALL SELECT "invoices", "INV-ERR-PAID"
+  UNION ALL SELECT "generation", "GEN-PLANT-003-2026-08-12"
+  UNION ALL SELECT "generation", "GEN-PLANT-004-2026-08-17"
+),
+
+actual AS (
+  SELECT "customers" AS entity, customer_id AS record_key
+  FROM ${ref("quarantine_customers")}
+  UNION ALL
+  SELECT "plants", plant_id
+  FROM ${ref("quarantine_plants")}
+  UNION ALL
+  SELECT "contracts", contract_id
+  FROM ${ref("quarantine_contracts")}
+  UNION ALL
+  SELECT "invoices", invoice_id
+  FROM ${ref("quarantine_invoices")}
+  UNION ALL
+  SELECT "generation", generation_id
+  FROM ${ref("quarantine_generation")}
+)
+
+SELECT expected.*
+FROM expected
+LEFT JOIN actual
+  USING (entity, record_key)
+WHERE actual.record_key IS NULL

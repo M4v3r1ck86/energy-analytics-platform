@@ -1,0 +1,47 @@
+config {
+  type: "table",
+  database: dataform.projectConfig.defaultDatabase,
+  schema: "energy_silver",
+  name: "silver_plants",
+  description: "Cadastro Silver de usinas: uma linha válida e mais recente por usina.",
+  tags: ["stage3", "silver", "curated", "plants"],
+  hermetic: true,
+  assertions: {
+    uniqueKey: ["plant_id"],
+    nonNull: ["plant_id", "partner_id", "plant_name", "energy_source", "state_code", "installed_capacity_kw", "commercial_operation_date", "status", "source_updated_at", "batch_id"],
+    rowConditions: [
+      "installed_capacity_kw > 0",
+      "commercial_operation_date <= CURRENT_DATE()",
+      "energy_source IN ('SOLAR', 'BIOGAS', 'BIOMASS')",
+      "status IN ('OPERATING', 'MAINTENANCE', 'INACTIVE')"
+    ]
+  },
+  bigquery: {
+    clusterBy: ["status", "energy_source"],
+    labels: { layer: "silver", entity: "plants" }
+  },
+  columns: {
+    plant_id: "Identificador estável da usina.",
+    installed_capacity_kw: "Capacidade instalada positiva em kW.",
+    silver_processed_at: "Momento em que o registro foi materializado na Silver."
+  }
+}
+
+SELECT
+  plant_id,
+  partner_id,
+  plant_name,
+  energy_source,
+  distributor_code,
+  city,
+  state_code,
+  installed_capacity_kw,
+  commercial_operation_date,
+  status,
+  source_updated_at,
+  extracted_at,
+  batch_id,
+  quality_warning_codes,
+  CURRENT_TIMESTAMP() AS silver_processed_at
+FROM ${ref("int_plants_classified")}
+WHERE is_valid

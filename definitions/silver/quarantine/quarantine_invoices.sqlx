@@ -1,0 +1,23 @@
+config {
+  type: "table",
+  database: dataform.projectConfig.defaultDatabase,
+  schema: "energy_silver",
+  name: "quarantine_invoices",
+  description: "Faturas rejeitadas na classificação Silver, incluindo erros financeiros e referências inválidas.",
+  tags: ["stage3", "silver", "quarantine", "invoices"],
+  hermetic: true,
+  assertions: {
+    rowConditions: ["ARRAY_LENGTH(quality_error_codes) > 0"]
+  },
+  bigquery: {
+    partitionBy: "reference_month",
+    clusterBy: ["invoice_id", "contract_id"],
+    labels: { layer: "quarantine", entity: "invoices" }
+  }
+}
+
+SELECT
+  * EXCEPT (is_valid),
+  CURRENT_TIMESTAMP() AS quarantined_at
+FROM ${ref("int_invoices_classified")}
+WHERE NOT is_valid

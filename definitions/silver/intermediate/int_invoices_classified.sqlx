@@ -1,0 +1,67 @@
+config {
+  type: "view",
+  database: dataform.projectConfig.defaultDatabase,
+  schema: "energy_silver",
+  name: "int_invoices_classified",
+  description: "Versão mais recente de cada fatura, incluindo reconciliação financeira e integridade referencial.",
+  tags: ["stage3", "silver", "intermediate", "invoices"],
+  hermetic: true
+}
+
+WITH raw_ranked AS (
+  SELECT
+    *,
+    ROW_NUMBER() OVER (
+      PARTITION BY invoice_id
+      ORDER BY source_updated_at DESC, extracted_at DESC, batch_id DESC
+    ) AS version_rank
+  FROM ${ref("invoices")}
+),
+
+latest AS (
+  SELECT * EXCEPT (version_rank)
+  FROM raw_ranked
+  WHERE version_rank = 1
+),
+
+with_references AS (
+  SELECT
+    invoice.*,
+    contract.contract_id IS NOT NULL AS contract_exists
+  FROM latest AS invoice
+  LEFT JOIN ${ref("silver_contracts")} AS contract
+    USING (contract_id)
+),
+
+classified AS (
+  SELECT
+    * EXCEPT (contract_exists),
+    ARRAY(
+      SELECT code
+      FROM UNNEST([
+        IF(invoice_id IS NULL OR TRIM(invoice_id) = "", "INVOICE_ID_MISSING", NULL),
+        IF(contract_id IS NULL OR TRIM(contract_id) = "", "CONTRACT_ID_MISSING", NULL),
+        IF(reference_month IS NULL OR EXTRACT(DAY FROM reference_month) != 1, "INVALID_REFERENCE_MONTH", NULL),
+        IF(issue_date IS NULL, "ISSUE_DATE_MISSING", NULL),
+        IF(due_date IS NULL, "DUE_DATE_MISSING", NULL),
+        IF(due_date < issue_date, "DUE_DATE_BEFORE_ISSUE_DATE", NULL),
+        IF(energy_consumed_kwh IS NULL OR energy_consumed_kwh < 0, "NEGATIVE_OR_MISSING_ENERGY_CONSUMED", NULL),
+        IF(energy_compensated_kwh IS NULL OR energy_compensated_kwh < 0, "NEGATIVE_OR_MISSING_ENERGY_COMPENSATED", NULL),
+        IF(gross_amount_brl IS NULL OR discount_amount_brl IS NULL OR net_amount_brl IS NULL OR gross_amount_brl < 0 OR discount_amount_brl < 0 OR net_amount_brl < 0, "NEGATIVE_OR_MISSING_FINANCIAL_AMOUNT", NULL),
+        IF(gross_amount_brl IS NOT NULL AND discount_amount_brl IS NOT NULL AND net_amount_brl IS NOT NULL AND ABS(net_amount_brl - (gross_amount_brl - discount_amount_brl)) > 0.01, "AMOUNT_RECONCILIATION_ERROR", NULL),
+        IF(status = "PAID" AND paid_at IS NULL, "PAID_WITHOUT_TIMESTAMP", NULL),
+        IF(status IS NULL OR status NOT IN ("OPEN", "PAID", "OVERDUE", "CANCELLED"), "INVALID_INVOICE_STATUS", NULL),
+        IF(source_updated_at IS NULL, "SOURCE_UPDATED_AT_MISSING", NULL),
+        IF(batch_id IS NULL OR TRIM(batch_id) = "", "BATCH_ID_MISSING", NULL),
+        IF(NOT contract_exists, "CONTRACT_NOT_FOUND_IN_SILVER", NULL)
+      ]) AS code
+      WHERE code IS NOT NULL
+    ) AS quality_error_codes,
+    ARRAY<STRING>[] AS quality_warning_codes
+  FROM with_references
+)
+
+SELECT
+  *,
+  ARRAY_LENGTH(quality_error_codes) = 0 AS is_valid
+FROM classified

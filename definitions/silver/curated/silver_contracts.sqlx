@@ -1,0 +1,49 @@
+config {
+  type: "table",
+  database: dataform.projectConfig.defaultDatabase,
+  schema: "energy_silver",
+  name: "silver_contracts",
+  description: "Contratos Silver válidos, deduplicados e ligados a clientes e usinas válidos.",
+  tags: ["stage3", "silver", "curated", "contracts"],
+  hermetic: true,
+  assertions: {
+    uniqueKeys: [["contract_id"], ["consumer_unit_id", "start_date"]],
+    nonNull: ["contract_id", "customer_id", "plant_id", "consumer_unit_id", "start_date", "contracted_energy_kwh_month", "discount_rate", "status", "source_updated_at", "batch_id"],
+    rowConditions: [
+      "contracted_energy_kwh_month > 0",
+      "discount_rate BETWEEN 0 AND 1",
+      "end_date IS NULL OR end_date >= start_date",
+      "status IN ('ACTIVE', 'SUSPENDED', 'CANCELLED')"
+    ]
+  },
+  bigquery: {
+    partitionBy: "start_date",
+    clusterBy: ["status", "customer_id", "plant_id"],
+    labels: { layer: "silver", entity: "contracts" }
+  },
+  columns: {
+    contract_id: "Identificador estável do contrato.",
+    customer_id: "Cliente validado na tabela silver_customers.",
+    plant_id: "Usina validada na tabela silver_plants.",
+    silver_processed_at: "Momento em que o registro foi materializado na Silver."
+  }
+}
+
+SELECT
+  contract_id,
+  customer_id,
+  plant_id,
+  consumer_unit_id,
+  distributor_code,
+  start_date,
+  end_date,
+  contracted_energy_kwh_month,
+  discount_rate,
+  status,
+  source_updated_at,
+  extracted_at,
+  batch_id,
+  quality_warning_codes,
+  CURRENT_TIMESTAMP() AS silver_processed_at
+FROM ${ref("int_contracts_classified")}
+WHERE is_valid

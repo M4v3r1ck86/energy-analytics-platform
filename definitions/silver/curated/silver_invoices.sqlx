@@ -1,0 +1,53 @@
+config {
+  type: "table",
+  database: dataform.projectConfig.defaultDatabase,
+  schema: "energy_silver",
+  name: "silver_invoices",
+  description: "Faturas Silver válidas, deduplicadas, reconciliadas e ligadas a contratos válidos.",
+  tags: ["stage3", "silver", "curated", "invoices"],
+  hermetic: true,
+  assertions: {
+    uniqueKeys: [["invoice_id"], ["contract_id", "reference_month"]],
+    nonNull: ["invoice_id", "contract_id", "reference_month", "issue_date", "due_date", "gross_amount_brl", "discount_amount_brl", "net_amount_brl", "status", "source_updated_at", "batch_id"],
+    rowConditions: [
+      "EXTRACT(DAY FROM reference_month) = 1",
+      "due_date >= issue_date",
+      "energy_consumed_kwh >= 0",
+      "energy_compensated_kwh >= 0",
+      "ABS(net_amount_brl - (gross_amount_brl - discount_amount_brl)) <= 0.01",
+      "status != 'PAID' OR paid_at IS NOT NULL",
+      "status IN ('OPEN', 'PAID', 'OVERDUE', 'CANCELLED')"
+    ]
+  },
+  bigquery: {
+    partitionBy: "reference_month",
+    clusterBy: ["status", "contract_id"],
+    labels: { layer: "silver", entity: "invoices" }
+  },
+  columns: {
+    invoice_id: "Identificador estável da fatura.",
+    net_amount_brl: "Valor líquido reconciliado com bruto menos desconto.",
+    silver_processed_at: "Momento em que o registro foi materializado na Silver."
+  }
+}
+
+SELECT
+  invoice_id,
+  contract_id,
+  reference_month,
+  issue_date,
+  due_date,
+  energy_consumed_kwh,
+  energy_compensated_kwh,
+  gross_amount_brl,
+  discount_amount_brl,
+  net_amount_brl,
+  status,
+  paid_at,
+  source_updated_at,
+  extracted_at,
+  batch_id,
+  quality_warning_codes,
+  CURRENT_TIMESTAMP() AS silver_processed_at
+FROM ${ref("int_invoices_classified")}
+WHERE is_valid

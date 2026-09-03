@@ -1,0 +1,48 @@
+config {
+  type: "table",
+  database: dataform.projectConfig.defaultDatabase,
+  schema: "energy_silver",
+  name: "silver_customers",
+  description: "Cadastro Silver de clientes: uma linha válida e mais recente por cliente.",
+  tags: ["stage3", "silver", "curated", "customers"],
+  hermetic: true,
+  assertions: {
+    uniqueKeys: [["customer_id"], ["document_id"]],
+    nonNull: ["customer_id", "full_name", "document_id", "city", "state_code", "customer_segment", "signup_date", "status", "source_updated_at", "batch_id"],
+    rowConditions: [
+      "REGEXP_CONTAINS(state_code, r'^[A-Z]{2}$')",
+      "customer_segment IN ('RESIDENTIAL', 'SMB')",
+      "status IN ('ACTIVE', 'SUSPENDED', 'CHURNED')"
+    ]
+  },
+  bigquery: {
+    partitionBy: "signup_date",
+    clusterBy: ["status", "state_code"],
+    labels: { layer: "silver", entity: "customers" }
+  },
+  columns: {
+    customer_id: "Identificador estável do cliente.",
+    document_id: "Documento sintético único após tratamento.",
+    quality_warning_codes: "Avisos que não impedem a publicação do registro.",
+    silver_processed_at: "Momento em que o registro foi materializado na Silver."
+  }
+}
+
+SELECT
+  customer_id,
+  full_name,
+  document_id,
+  email,
+  phone,
+  city,
+  state_code,
+  customer_segment,
+  signup_date,
+  status,
+  source_updated_at,
+  extracted_at,
+  batch_id,
+  quality_warning_codes,
+  CURRENT_TIMESTAMP() AS silver_processed_at
+FROM ${ref("int_customers_classified")}
+WHERE is_valid
